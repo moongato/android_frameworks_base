@@ -2619,13 +2619,6 @@ public final class Settings {
         public static final String LOCKSCREEN_TARGETS = "lockscreen_targets";
 
         /**
-         * Should the non-intrsive incall ui be used
-         *
-         * @hide
-         */
-        public static final String NON_INTRUSIVE_INCALL = "non_intrusive_incall";
-
-        /**
          *  Enable statusbar double tap gesture on to put device to sleep
          * @hide
          */
