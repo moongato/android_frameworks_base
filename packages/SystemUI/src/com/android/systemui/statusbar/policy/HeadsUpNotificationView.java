@@ -103,7 +103,7 @@ public class HeadsUpNotificationView extends FrameLayout implements SwipeHelper.
             return false;
         }
 
-        // set custom background
+        // set background
         if (mBackground != 0x00ffffff) {
             setHeadsUpCustomBg();
         } else {
