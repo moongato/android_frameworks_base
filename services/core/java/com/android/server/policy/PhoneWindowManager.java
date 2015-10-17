@@ -413,6 +413,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mUseTvRouting;
 
     int mBackKillTimeout;
+    boolean mVolumeRockerWake;
     int mPointerLocationMode = 0; // guarded by mLock
 
     // The last window we were told about in focusChanged.
@@ -615,6 +616,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mHavePendingMediaKeyRepeatWithWakeLock;
 
     private int mCurrentUserId;
+    private boolean haveEnableGesture = false;
 
     // Maps global key codes to the components that will handle them.
     private GlobalKeyManager mGlobalKeyManager;
@@ -740,6 +742,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(Settings.Global.getUriFor(
                     Settings.Global.POLICY_CONTROL), false, this,
                     UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.VOLUME_ROCKER_WAKE), false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.THREE_FINGER_GESTURE), false, this,
+                    UserHandle.USER_ALL);
             updateSettings();
         }
 
@@ -791,6 +799,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private ImmersiveModeConfirmation mImmersiveModeConfirmation;
 
     private SystemGesturesPointerEventListener mSystemGestures;
+    private OPGesturesListener mOPGestures;
 
     IStatusBarService getStatusBarService() {
         synchronized (mServiceAquireLock) {
@@ -1368,6 +1377,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     context, minHorizontal, maxHorizontal, minVertical, maxVertical, maxRadius);
         }
 
+        mOPGestures = new OPGesturesListener(context, new OPGesturesListener.Callbacks() {
+                    @Override
+                    public void onSwipeThreeFinger() {
+                        mHandler.post(mScreenshotRunnable);
+                    }
+                });
+
         mHandler = new PolicyHandler();
         mWakeGestureListener = new MyWakeGestureListener(mContext, mHandler);
         mOrientationListener = new MyOrientationListener(mContext, mHandler);
@@ -1582,6 +1598,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+     private void enableSwipeThreeFingerGesture(boolean enable){
+        if (enable) {
+            if (haveEnableGesture) return;
+            haveEnableGesture = true;
+            mWindowManagerFuncs.registerPointerEventListener(mOPGestures);
+        } else {
+            if (!haveEnableGesture) return;
+            haveEnableGesture = false;
+            mWindowManagerFuncs.unregisterPointerEventListener(mOPGestures);
+        }
+    }
+
     @Override
     public void setInitialDisplaySize(Display display, int width, int height, int density) {
         // This method might be called before the policy has been fully initialized
@@ -1720,6 +1748,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.Secure.INCALL_POWER_BUTTON_BEHAVIOR_DEFAULT,
                     UserHandle.USER_CURRENT);
 
+            // volume rocker wake
+            mVolumeRockerWake = Settings.System.getIntForUser(resolver,
+                    Settings.System.VOLUME_ROCKER_WAKE, 0, UserHandle.USER_CURRENT) == 1;
+
             // Configure wake gesture.
             boolean wakeGestureEnabledSetting = Settings.Secure.getIntForUser(resolver,
                     Settings.Secure.WAKE_GESTURE_ENABLED, 0,
@@ -1728,6 +1760,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mWakeGestureEnabledSetting = wakeGestureEnabledSetting;
                 updateWakeGestureListenerLp();
             }
+
+            //Three Finger Gesture
+            boolean threeFingerGesture = Settings.System.getIntForUser(resolver,
+                    Settings.System.THREE_FINGER_GESTURE, 1, UserHandle.USER_CURRENT) == 1;
+            enableSwipeThreeFingerGesture(threeFingerGesture);            
 
             // Configure rotation lock.
             int userRotation = Settings.System.getIntForUser(resolver,
@@ -4929,8 +4966,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // If we're currently dozing with the screen on and the keyguard showing, pass the key
             // to the application but preserve its wake key status to make sure we still move
             // from dozing to fully interactive if we would normally go from off to fully
-            // interactive.
+            // interactive, unless the user has explicitly disabled this wake key.
             result = ACTION_PASS_TO_USER;
+	    isWakeKey = isWakeKey && isWakeKeyEnabled(keyCode);
         } else {
             // When the screen is off and the key is not injected, determine whether
             // to wake the device but don't pass the key to the application.
@@ -5198,6 +5236,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+     /**
+     * Check if the given keyCode represents a key that is considered a wake key
+     * and is currently enabled by the user in Settings or for another reason.
+     */
+    private boolean isWakeKeyEnabled(int keyCode) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_VOLUME_MUTE:
+                // Volume keys are still wake keys if the device is docked.
+                return mVolumeRockerWake || mDockMode != Intent.EXTRA_DOCK_STATE_UNDOCKED;
+        }
+        return true;
+    }
+
     /**
      * When the screen is off we ignore some keys that might otherwise typically
      * be considered wake keys.  We filter them out here.
@@ -5211,7 +5264,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_VOLUME_MUTE:
-                return mDockMode != Intent.EXTRA_DOCK_STATE_UNDOCKED;
+                return mVolumeRockerWake || mDockMode != Intent.EXTRA_DOCK_STATE_UNDOCKED;
 
             // ignore media and camera keys
             case KeyEvent.KEYCODE_MUTE:
