@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 Chroma
+<!-- Copyright (C) 2013 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,10 +14,5 @@
      limitations under the License.
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <!-- Battery level for expanded quick settings [CHAR LIMIT=2] -->
-    <string name="battery_level_template"><xliff:g id="level" example="45">%d</xliff:g>%%</string>
-
-    <!-- Weather string format in expanded statusbar header -->
-    <string name="status_bar_expanded_header_weather_format"><xliff:g id="temp">%1$s</xliff:g> - <xliff:g id="condition">%2$s</xliff:g></string>
-
+    <string name="keyguard_wallpaper_instructions">Set lock screen wallpaper</string>
 </resources>

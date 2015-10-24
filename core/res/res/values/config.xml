@@ -889,6 +889,10 @@
          Used to decide if the user can change the colors -->
     <bool name="config_multiColorBatteryLed">false</bool>
 
+    <!-- Do the battery/notification LEDs support pulsing?
+         Used to decide if we show pulse settings -->
+    <bool name="config_ledCanPulse">true</bool>
+
     <!-- Default value for LED off time when the battery is low on charge in miliseconds -->
     <integer name="config_notificationsBatteryLedOff">2875</integer>
 
@@ -2294,9 +2298,12 @@
          Array of "code#,retry#"  -->
     <string-array name="config_cell_retries_per_error_code">
     </string-array>
+
     <!-- Whether doze should invert colors for notifications. If the RRO theme causes
     the NORMAL notification background to be dark and the text to be light, this boolean
     needs to be set to false, to prevent the doze notifications from being light -->
     <bool name="config_invert_colors_on_doze">true</bool>
     
+    <!-- Whether doze feature is enabled by default in settings. -->
+    <bool name="config_doze_enabled_by_default">false</bool>
 </resources>
