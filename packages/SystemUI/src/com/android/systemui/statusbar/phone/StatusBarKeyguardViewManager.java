@@ -471,10 +471,6 @@ public class StatusBarKeyguardViewManager {
         return mViewMediatorCallback.isInputRestricted();
     }
 
-    public boolean isKeyguardShowingMedia() {
-        return mPhoneStatusBar.isKeyguardShowingMedia();
-    }
-
     public void keyguardGoingAway() {
         mPhoneStatusBar.keyguardGoingAway();
     }
@@ -498,5 +494,9 @@ public class StatusBarKeyguardViewManager {
         if (mPhoneStatusBar.getNavigationBarView() != null) {
             mPhoneStatusBar.getNavigationBarView().setWakeAndUnlocking(true);
         }
+    }
+
+    public boolean isKeyguardShowingMedia() {
+        return mPhoneStatusBar.isKeyguardShowingMedia();
     }
 }

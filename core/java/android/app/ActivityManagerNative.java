@@ -5263,13 +5263,14 @@ class ActivityManagerProxy implements IActivityManager
     }
 
     public void keyguardGoingAway(boolean disableWindowAnimations,
-            boolean keyguardGoingToNotificationShade, boolean keyguardShowingMedia)
-            throws RemoteException {
+            boolean keyguardGoingToNotificationShade,
+            boolean keyguardShowingMedia) throws RemoteException {
         Parcel data = Parcel.obtain();
         Parcel reply = Parcel.obtain();
         data.writeInterfaceToken(IActivityManager.descriptor);
         data.writeInt(disableWindowAnimations ? 1 : 0);
         data.writeInt(keyguardGoingToNotificationShade ? 1 : 0);
+        data.writeInt(keyguardShowingMedia ? 1 : 0);
         mRemote.transact(KEYGUARD_GOING_AWAY_TRANSACTION, data, reply, 0);
         reply.readException();
         data.recycle();

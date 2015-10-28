@@ -226,20 +226,20 @@ public class WallpaperManager {
             return mHeight;
         }
     }
-
+    
     static class Globals extends IWallpaperManagerCallback.Stub {
         private IWallpaperManager mService;
         private Bitmap mWallpaper;
         private Bitmap mDefaultWallpaper;
         private Bitmap mKeyguardWallpaper;
-
+        
         private static final int MSG_CLEAR_WALLPAPER = 1;
 
         Globals(Looper looper) {
             IBinder b = ServiceManager.getService(Context.WALLPAPER_SERVICE);
             mService = IWallpaperManager.Stub.asInterface(b);
         }
-
+        
         public void onWallpaperChanged() {
             /* The wallpaper has changed but we shouldn't eagerly load the
              * wallpaper as that would be inefficient. Reset the cached wallpaper
@@ -314,6 +314,12 @@ public class WallpaperManager {
             synchronized (this) {
                 mWallpaper = null;
                 mDefaultWallpaper = null;
+            }
+        }
+
+        public void forgetLoadedKeyguardWallpaper() {
+            synchronized (this) {
+                mKeyguardWallpaper = null;
             }
         }
 
@@ -404,7 +410,7 @@ public class WallpaperManager {
             }
         }
     }
-
+    
     private static final Object sSync = new Object[0];
     private static Globals sGlobals;
 
@@ -688,7 +694,7 @@ public class WallpaperManager {
 
     /**
      * Like {@link #getDrawable()} but returns a Bitmap.
-     *
+     * 
      * @hide
      */
     public Bitmap getBitmap() {
@@ -712,6 +718,13 @@ public class WallpaperManager {
         if (isWallpaperSupported()) {
             sGlobals.forgetLoadedWallpaper();
         }
+    }
+
+    /**
+     * @hide
+     */
+    public void forgetLoadedKeyguardWallpaper() {
+        sGlobals.forgetLoadedKeyguardWallpaper();
     }
 
     /**
